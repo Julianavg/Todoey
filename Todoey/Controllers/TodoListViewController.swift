@@ -13,33 +13,17 @@ class TodoListViewController: UITableViewController {
 
     var itemArray = [Item]()
     
-    let defaults = UserDefaults.standard
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
-        
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let newItem = Item()
-        newItem.title = "Buy Noah's Milk"
-        itemArray.append(newItem)
         
-        let newItem2 = Item()
-        newItem2.title = "walk Milo (dog)"
-        itemArray.append(newItem2)
+        print(dataFilePath!)
         
-        let newItem3 = Item()
-        newItem3.title = "Take car to car wash"
-        itemArray.append(newItem3)
-        
-        
-        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
-            itemArray = items
-        
-    }
-        
-        
+        loadItems()
+
         // Do any additional setup after loading the view.
-        
         
     }
 
@@ -78,7 +62,6 @@ class TodoListViewController: UITableViewController {
 
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
- 
 /* the lines below have the same resault but is longer, we are setting the opposite equivalence that we had before, if done was true now is false...
         if itemArray[indexPath.row].done == false {
             itemArray[indexPath.row].done = true
@@ -86,8 +69,8 @@ class TodoListViewController: UITableViewController {
             itemArray[indexPath.row].done = false
         }
  */
-        
-        tableView.reloadData()
+        saveItems()
+
         
         tableView.deselectRow(at: indexPath, animated: true)
     }
@@ -107,10 +90,9 @@ class TodoListViewController: UITableViewController {
             
             self.itemArray.append(newItem)
             
-            self.defaults.set(self.itemArray, forKey: "TodoListArray")
+            self.saveItems()
             
-            self.tableView.reloadData()
-             
+
             //What will happen once the user click the Add Item button on our UIAlert
             
             
@@ -128,6 +110,35 @@ class TodoListViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
 
   }
-
+    //MARK - Model Manupulation Methods
+    
+    func saveItems() {
+        let encoder = PropertyListEncoder()
+        
+        do {
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+            
+            
+        } catch {
+            print("Error encoding item array, \(error)")
+        }
+        
+        self.tableView.reloadData()
+        
+        
+    }
+    
+    func loadItems() {
+            if let data = try? Data(contentsOf: dataFilePath!){
+                let decoder = PropertyListDecoder()
+                do {
+                itemArray = try decoder.decode([Item].self, from: data)
+                } catch {
+                    print("Error decoding item array, \(error)")
+            }
+        
+        }
+    }
 
 }
